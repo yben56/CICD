@@ -1,0 +1,81 @@
+# development.yml
+name: CI - Dev Branch
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ✅ Step 1: Cache node_modules and npm cache
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      # ✅ Step 2: Cache Playwright browsers
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      # ✅ Step 3: Checkout code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # ✅ Step 4: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # ✅ Step 5: Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # ✅ Step 6: Run ESLint
+      - name: Run ESLint
+        run: npm run lint
+
+      # ✅ Step 7: Run Unit / Component / Integration Tests
+      - name: Run Unit Tests (Vitest)
+        run: npm run test -- --coverage
+
+      # ✅ Step 8: Run E2E Tests (Playwright, Chromium only)
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E Tests
+        run: |
+          if ls e2e/*.spec.ts > /dev/null 2>&1; then
+            npx playwright test
+          else
+            echo "No E2E tests found. Skipping."
+          fi
+
+      # ✅ Step 9: Build the project
+      - name: Build Vite Project
+        run: npm run build
+
+      # ✅ Step 10: Upload dist folder
+      - name: Upload dist folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-dist-${{ github.run_number }}
+          path: dist
+          retention-days: 3
