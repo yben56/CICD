@@ -26,16 +26,16 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t gcr.io/cicd-457416/cicd-app .
+          docker build -t asia-east1-docker.pkg.dev/cicd-457416/cicd-repo/cicd-app .
 
-      - name: Push to Google Container Registry
+      - name: Push to Artifact Registry
         run: |
-          docker push gcr.io/cicd-457416/cicd-app
+          docker push asia-east1-docker.pkg.dev/cicd-457416/cicd-repo/cicd-app
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy cicd-app \
-            --image gcr.io/cicd-457416/cicd-app \
+            --image asia-east1-docker.pkg.dev/cicd-457416/cicd-repo/cicd-app \
             --platform managed \
             --region asia-east1 \
             --allow-unauthenticated
